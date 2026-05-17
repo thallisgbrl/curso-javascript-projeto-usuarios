@@ -31,40 +31,31 @@ class UserController {
             let values = this.getValues(this.formUpdateEl);
 
             let index = this.formUpdateEl.dataset.trIndex;
-
             let tr = this.tableEl.rows[index];
 
             let userOld = JSON.parse(tr.dataset.user);
 
-            let result = Object.assign({}, userOld, values);
+            let user = new User();
+            user.loadFromJSON(userOld);
+
+            user.loadFromJSON(values);
 
             this.getPhoto(this.formUpdateEl).then(
                 (content) => {
 
                     if (!values.photo) {
-                        result._photo = userOld._photo;
+                        user.photo = userOld._photo;
                     } else {
-                        result._photo = content;
+                        user.photo = content;
                     }
-
-                    let user = new User();
-
-                    user.loadFromJSON(result);
 
                     user.save();
 
                     this.getTr(user, tr);
 
-                    let users = this.getUsersStorage();
-                    users[index] = result;
-                    sessionStorage.setItem("users", JSON.stringify(users));
-
                     this.updateCount();
 
                     this.formUpdateEl.reset();
-
-                    this.formEl.reset();
-
                     btn.disabled = false;
 
                     this.showPanelCreate();
@@ -72,14 +63,12 @@ class UserController {
                 },
                 (e) => {
                     console.error(e);
-
                 }
             );
 
         });
 
     }
-
 
     onSubmit() {
 
@@ -199,23 +188,9 @@ class UserController {
 
     }
 
-    getUsersStorage() {
-
-        let users = [];
-
-        if (localStorage.getItem("users")) {
-
-            users = JSON.parse(localStorage.getItem("users"));
-
-        }
-
-        return users;
-
-    }
-
     selectAll() {
 
-        let users = this.getUsersStorage();
+        let users = User.getUsersStorage();
 
         this.tableEl.innerHTML = "";
 
@@ -271,13 +246,11 @@ class UserController {
 
             if (confirm("Deseja realmente excluir?")) {
 
-                let index = tr.sectionRowIndex;
+                let user = new User();
 
-                let users = this.getUsersStorage();
+                user.loadFromJSON(JSON.parse(tr.dataset.user));
 
-                users.splice(index, 1);
-
-                sessionStorage.setItem("users", JSON.stringify(users));
+                user.remove();
 
                 tr.remove();
 
